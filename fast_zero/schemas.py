@@ -1,5 +1,21 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
-class Message(BaseModel):
+class SchemaBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class Message(SchemaBase):
     message: str
+
+
+class UserSchema(SchemaBase):
+    username: str
+    email: EmailStr
+    password: str
+
+
+class UserPublic(SchemaBase):
+    id: int
+    username: str
+    email: EmailStr
