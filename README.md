@@ -27,3 +27,15 @@ Para rodar os testes:
 ```shell    
 task test
 ```
+
+Crie um bancos de dados postgres com a seguinte env:
+
+```
+DATABASE_URL='postgresql://postgres:postgres@localhost:5432/fastzero'
+```
+
+Para criar um docker com esse banco, basta usar o docker compose:
+
+```shell
+docker compose up --build
+```
