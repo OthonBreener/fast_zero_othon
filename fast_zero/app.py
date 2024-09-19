@@ -1,19 +1,31 @@
 from http import HTTPStatus
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from fast_zero.database import get_session
 from fast_zero.models import User
-from fast_zero.schemas import Message, UserPublic, UserSchema
+from fast_zero.schemas import UserPublic, UserSchema
 
 app = FastAPI()
 
 
-@app.get('/', status_code=HTTPStatus.OK, response_model=Message)
+@app.get('/', status_code=HTTPStatus.OK, response_class=HTMLResponse)
 def read_root():
-    return {'message': 'Hello World'}
+    html = """
+    <html>
+        <head>
+            <title>Fast Zero</title>
+        </head>
+        <body>
+            <h1>Hello World</h1>
+            <p>Fast Zero</p>
+        </body>
+    </html>
+    """
+    return HTMLResponse(content=html)
 
 
 @app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
@@ -37,7 +49,7 @@ def created_user(user: UserSchema, session: Session = Depends(get_session)):
                 detail='Email already exists',
             )
 
-    new_user = User(**user.dict())
+    new_user = User(**user.model_dump())
     session.add(new_user)
     session.commit()
     session.refresh(new_user)
@@ -56,6 +68,21 @@ def read_users(session: Session = Depends(get_session)):
     users = session.scalars(select(User)).all()
 
     return users
+
+
+@app.get(
+    '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserPublic
+)
+def read_user_by_id(user_id: int, session: Session = Depends(get_session)):
+    user = session.scalar(select(User).where(User.id == user_id))
+
+    if not user:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='User not found',
+        )
+
+    return user
 
 
 @app.put(
