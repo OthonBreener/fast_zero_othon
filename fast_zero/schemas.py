@@ -19,3 +19,8 @@ class UserPublic(SchemaBase):
     id: int
     username: str
     email: EmailStr
+
+
+class Token(SchemaBase):
+    access_token: str
+    token_type: str
