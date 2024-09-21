@@ -90,17 +90,18 @@ def test_read_user_by_id_not_found(client, user):
     assert response.json() == {'detail': 'User not found'}
 
 
-def test_update_user(client, user):
+def test_update_user(client, user, token):
     # transforma o model sqlal em um schema pydantic
     user_schema = UserPublic.model_validate(user).model_dump()
 
     response_update = client.put(
-        '/users/1',
+        f'/users/{user.id}',
         json={
             'username': 'teste atualizar',
             'email': 'user@hotmail.com.br',
             'password': 'password',
         },
+        headers={'Authorization': f'Bearer {token}'},
     )
 
     assert response_update.status_code == HTTPStatus.OK
@@ -108,9 +109,9 @@ def test_update_user(client, user):
     assert response_update.json() != user_schema
 
 
-def test_delete_user(client, user):
+def test_delete_user(client, user, token):
     response = client.delete(
-        '/users/1',
+        f'/users/{user.id}', headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.NO_CONTENT
@@ -123,3 +124,38 @@ def test_delete_user(client, user):
     assert response.status_code == HTTPStatus.OK
 
     assert response.json() == []
+
+
+def test_delete_user_not_authorization(client, user):
+    response = client.delete(
+        f'/users/{user.id}', headers={'Authorization': 'Bearer token'}
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+def test_login_for_access_token(client, user):
+    response = client.post(
+        '/token',
+        data={
+            'username': user.email,
+            'password': 'password',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+
+    assert response.json().get('access_token') is not None
+    assert response.json().get('token_type') == 'Bearer'
+
+
+def test_login_for_access_token_invalid(client, user):
+    response = client.post(
+        '/token',
+        data={
+            'username': user.email,
+            'password': user.password,
+        },
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
