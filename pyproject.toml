@@ -13,6 +13,8 @@ pydantic-settings = "^2.3.4"
 alembic = "^1.13.2"
 psycopg2 = "^2.9.9"
 pwdlib = {extras = ["argon2"], version = "^0.2.1"}
+python-multipart = "^0.0.9"
+pyjwt = "^2.9.0"
 
 
 [tool.poetry.group.dev.dependencies]
