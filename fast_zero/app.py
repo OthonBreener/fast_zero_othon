@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from fast_zero.database import get_session
 from fast_zero.models import User
 from fast_zero.schemas import UserPublic, UserSchema
+from fast_zero.security import get_password_hash
 
 app = FastAPI()
 
@@ -50,6 +51,13 @@ def created_user(user: UserSchema, session: Session = Depends(get_session)):
             )
 
     new_user = User(**user.model_dump())
+
+    new_user = User(
+        username=user.username,
+        email=user.email,
+        password=get_password_hash(user.password),
+    )
+
     session.add(new_user)
     session.commit()
     session.refresh(new_user)
@@ -100,7 +108,8 @@ def update_user(
 
     original_user.username = user.username
     original_user.email = user.email
-    original_user.password = user.password
+    original_user.password = get_password_hash(user.password)
+
     session.commit()
     session.refresh(original_user)
     return original_user
