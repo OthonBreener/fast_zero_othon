@@ -2,12 +2,19 @@ from http import HTTPStatus
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from fast_zero.database import get_session
 from fast_zero.models import User
-from fast_zero.schemas import UserPublic, UserSchema
+from fast_zero.schemas import Token, UserPublic, UserSchema
+from fast_zero.security import (
+    create_access_token,
+    get_current_user,
+    get_password_hash,
+    verify_password_hash,
+)
 
 app = FastAPI()
 
@@ -50,6 +57,13 @@ def created_user(user: UserSchema, session: Session = Depends(get_session)):
             )
 
     new_user = User(**user.model_dump())
+
+    new_user = User(
+        username=user.username,
+        email=user.email,
+        password=get_password_hash(user.password),
+    )
+
     session.add(new_user)
     session.commit()
     session.refresh(new_user)
@@ -89,33 +103,63 @@ def read_user_by_id(user_id: int, session: Session = Depends(get_session)):
     '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserPublic
 )
 def update_user(
-    user_id: int, user: UserSchema, session: Session = Depends(get_session)
+    user_id: int,
+    user: UserSchema,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
-    original_user = session.scalar(select(User).where(User.id == user_id))
-    if not original_user:
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail='User not found',
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='You can only update your own user',
         )
 
-    original_user.username = user.username
-    original_user.email = user.email
-    original_user.password = user.password
+    current_user.username = user.username
+    current_user.email = user.email
+    current_user.password = get_password_hash(user.password)
+
     session.commit()
-    session.refresh(original_user)
-    return original_user
+    session.refresh(current_user)
+    return current_user
 
 
 @app.delete(
     '/users/{user_id}',
     status_code=HTTPStatus.NO_CONTENT,
 )
-def delete_user(user_id: int, session: Session = Depends(get_session)):
-    user = session.scalar(select(User).where(User.id == user_id))
-    if not user:
+def delete_user(
+    user_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail='User not found',
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='You can only deleted your own user',
         )
-    session.delete(user)
+
+    session.delete(current_user)
     session.commit()
+
+
+@app.post(
+    '/token',
+    status_code=HTTPStatus.OK,
+    response_model=Token,
+)
+def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_session),
+):
+    user = session.scalar(select(User).where(User.email == form_data.username))
+
+    if not user or not verify_password_hash(form_data.password, user.password):
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Incorrect email or password',
+        )
+
+    return {
+        'access_token': create_access_token({'sub': user.email}),
+        'token_type': 'Bearer',
+    }

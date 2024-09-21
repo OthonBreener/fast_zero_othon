@@ -39,3 +39,12 @@ Para criar um docker com esse banco, basta usar o docker compose:
 ```shell
 docker compose up --build
 ```
+
+## Variáveis que devem conter no arquivo env
+
+```
+DATABASE_URL
+SECRETY_KEY
+ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES
+```
