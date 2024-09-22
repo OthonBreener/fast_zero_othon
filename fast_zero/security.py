@@ -48,7 +48,7 @@ def create_access_token(data: dict) -> str:
 
 def get_current_user(
     session: Session = Depends(get_session),
-    token: str = Depends(OAuth2PasswordBearer(tokenUrl='/token')),
+    token: str = Depends(OAuth2PasswordBearer(tokenUrl='/auth/token')),
 ) -> User:
     try:
         decoded = decode(

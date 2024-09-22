@@ -3,12 +3,6 @@ from http import HTTPStatus
 from fast_zero.schemas import UserPublic
 
 
-def test_read_root_deve_retornar_ok(client):
-    response = client.get('/')
-
-    assert response.status_code == HTTPStatus.OK
-
-
 def test_created_user(client):
     response = client.post(
         '/users/',
@@ -129,33 +123,6 @@ def test_delete_user(client, user, token):
 def test_delete_user_not_authorization(client, user):
     response = client.delete(
         f'/users/{user.id}', headers={'Authorization': 'Bearer token'}
-    )
-
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
-
-
-def test_login_for_access_token(client, user):
-    response = client.post(
-        '/token',
-        data={
-            'username': user.email,
-            'password': 'password',
-        },
-    )
-
-    assert response.status_code == HTTPStatus.OK
-
-    assert response.json().get('access_token') is not None
-    assert response.json().get('token_type') == 'Bearer'
-
-
-def test_login_for_access_token_invalid(client, user):
-    response = client.post(
-        '/token',
-        data={
-            'username': user.email,
-            'password': user.password,
-        },
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
