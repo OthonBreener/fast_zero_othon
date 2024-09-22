@@ -15,14 +15,14 @@ from fast_zero.security import (
 
 router_users = APIRouter(prefix='/users', tags=['users'])
 
-NewSession = Annotated[Session, Depends(get_session)]
+T_Session = Annotated[Session, Depends(get_session)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router_users.post(
     '/', status_code=HTTPStatus.CREATED, response_model=UserPublic
 )
-def created_user(user: UserSchema, session: NewSession):
+def created_user(user: UserSchema, session: T_Session):
     user_exists = session.scalar(
         select(User).where(
             (User.username == user.username) | (User.email == user.email)
@@ -60,7 +60,7 @@ def created_user(user: UserSchema, session: NewSession):
 @router_users.get(
     '/', status_code=HTTPStatus.OK, response_model=list[UserPublic]
 )
-def read_users(session: NewSession):
+def read_users(session: T_Session):
     """
     limit: limita a quantidade de dados que vão ser retornados na busca.
     offset: define a partir de onde deve retornar os dados
@@ -75,7 +75,7 @@ def read_users(session: NewSession):
 @router_users.get(
     '/{user_id}', status_code=HTTPStatus.OK, response_model=UserPublic
 )
-def read_user_by_id(user_id: int, session: NewSession):
+def read_user_by_id(user_id: int, session: T_Session):
     user = session.scalar(select(User).where(User.id == user_id))
 
     if not user:
@@ -93,7 +93,7 @@ def read_user_by_id(user_id: int, session: NewSession):
 def update_user(
     user_id: int,
     user: UserSchema,
-    session: NewSession,
+    session: T_Session,
     current_user: CurrentUser,
 ):
     if current_user.id != user_id:
@@ -117,7 +117,7 @@ def update_user(
 )
 def delete_user(
     user_id: int,
-    session: NewSession,
+    session: T_Session,
     current_user: CurrentUser,
 ):
     if current_user.id != user_id:
