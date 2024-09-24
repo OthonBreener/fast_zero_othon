@@ -103,6 +103,20 @@ def test_update_user(client, user, token):
     assert response_update.json() != user_schema
 
 
+def test_update_usar_with_id_invalid(client, user, token):
+    response = client.put(
+        '/users/2',
+        json={
+            'username': 'teste atualizar',
+            'email': 'user@hotmail.com.br',
+            'password': 'password',
+        },
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+
 def test_delete_user(client, user, token):
     response = client.delete(
         f'/users/{user.id}', headers={'Authorization': f'Bearer {token}'}
@@ -126,3 +140,11 @@ def test_delete_user_not_authorization(client, user):
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+def test_delete_user_id_incorrect(client, user, token):
+    response = client.delete(
+        '/users/2', headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
