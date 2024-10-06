@@ -7,6 +7,7 @@ class UserFactory(factory.Factory):
     """
     Usamos o Lazy para usar os atributos que já foram definidos.
     """
+
     class Meta:
         model = User
 
