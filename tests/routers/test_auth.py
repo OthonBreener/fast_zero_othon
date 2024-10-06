@@ -2,6 +2,8 @@ from http import HTTPStatus
 
 
 def test_login_for_access_token(client, user):
+    user = user()
+
     response = client.post(
         '/auth/token',
         data={
@@ -17,6 +19,8 @@ def test_login_for_access_token(client, user):
 
 
 def test_login_for_access_token_invalid(client, user):
+    user = user()
+
     response = client.post(
         '/auth/token',
         data={

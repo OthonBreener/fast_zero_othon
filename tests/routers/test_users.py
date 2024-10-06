@@ -22,10 +22,12 @@ def test_created_user(client):
 
 
 def test_created_user_with_user_name_exists(client, user):
+    user = user()
+
     response = client.post(
         '/users/',
         json={
-            'username': 'user',
+            'username': user.username,
             'email': 'user@hotmail.com.br',
             'password': 'password',
         },
@@ -36,11 +38,13 @@ def test_created_user_with_user_name_exists(client, user):
 
 
 def test_created_user_with_email_exists(client, user):
+    user = user()
+
     response = client.post(
         '/users/',
         json={
             'username': 'user2',
-            'email': 'user@hotmail.com.br',
+            'email': user.email,
             'password': 'password',
         },
     )
@@ -50,6 +54,8 @@ def test_created_user_with_email_exists(client, user):
 
 
 def test_read_users(client, user):
+    user = user()
+
     response = client.get(
         '/users/',
     )
@@ -57,21 +63,23 @@ def test_read_users(client, user):
     assert response.status_code == HTTPStatus.OK
 
     assert response.json() == [
-        {'username': 'user', 'email': 'user@hotmail.com.br', 'id': 1}
+        {'id': user.id, 'username': user.username, 'email': user.email}
     ]
 
 
 def test_read_user_by_id(client, user):
+    user = user()
+
     response = client.get(
-        '/users/1',
+        f'/users/{user.id}',
     )
 
     assert response.status_code == HTTPStatus.OK
 
     assert response.json() == {
-        'username': 'user',
-        'email': 'user@hotmail.com.br',
-        'id': 1,
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
     }
 
 
@@ -85,6 +93,10 @@ def test_read_user_by_id_not_found(client, user):
 
 
 def test_update_user(client, user, token):
+    user = user()
+
+    token = token(user)
+
     # transforma o model sqlal em um schema pydantic
     user_schema = UserPublic.model_validate(user).model_dump()
 
@@ -103,9 +115,13 @@ def test_update_user(client, user, token):
     assert response_update.json() != user_schema
 
 
-def test_update_usar_with_id_invalid(client, user, token):
+def test_update_user_with_id_invalid(client, user, token):
+    token = token(user())
+
+    user_2 = user()
+
     response = client.put(
-        '/users/2',
+        f'/users/{user_2.id}',
         json={
             'username': 'teste atualizar',
             'email': 'user@hotmail.com.br',
@@ -118,6 +134,10 @@ def test_update_usar_with_id_invalid(client, user, token):
 
 
 def test_delete_user(client, user, token):
+    user = user()
+
+    token = token(user)
+
     response = client.delete(
         f'/users/{user.id}', headers={'Authorization': f'Bearer {token}'}
     )
@@ -135,6 +155,8 @@ def test_delete_user(client, user, token):
 
 
 def test_delete_user_not_authorization(client, user):
+    user = user()
+
     response = client.delete(
         f'/users/{user.id}', headers={'Authorization': 'Bearer token'}
     )
@@ -143,8 +165,12 @@ def test_delete_user_not_authorization(client, user):
 
 
 def test_delete_user_id_incorrect(client, user, token):
+    token = token(user())
+
+    user_2 = user()
+
     response = client.delete(
-        '/users/2', headers={'Authorization': f'Bearer {token}'}
+        f'/users/{user_2.id}', headers={'Authorization': f'Bearer {token}'}
     )
 
     assert response.status_code == HTTPStatus.FORBIDDEN
