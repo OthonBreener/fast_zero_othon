@@ -24,6 +24,8 @@ def test_create_access_token():
 
 
 def test_get_current_user(client, user, session):
+    user = user()
+
     token = create_access_token({'sub': user.email})
 
     user = get_current_user(session, token)
