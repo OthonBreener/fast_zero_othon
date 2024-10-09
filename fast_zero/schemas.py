@@ -24,3 +24,17 @@ class UserPublic(SchemaBase):
 class Token(SchemaBase):
     access_token: str
     token_type: str
+
+
+class TodoSchema(SchemaBase):
+    title: str
+    description: str
+    state: str
+
+
+class TodoPublic(TodoSchema):
+    id: int
+
+
+class TodoList(SchemaBase):
+    todos: list[TodoPublic]
