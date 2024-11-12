@@ -1,14 +1,14 @@
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from fast_zero.app import app
 from fast_zero.database import get_session, table_registry
-from fast_zero.models import User
+from fast_zero.models import Todo, TodoState, User
 from fast_zero.security import get_password_hash
-from tests.factories import UserFactory
+from tests.factories import TodoFactory, UserFactory
 
 
 @pytest.fixture()
@@ -58,6 +58,37 @@ def user(session):
         return user
 
     return make_user
+
+
+@pytest.fixture()
+def todos(session):
+    def make_todos(
+        quantity: int = 1,
+        title: str = '',
+        description: str = '',
+        state: TodoState | None = None,
+    ):
+        datas = {}
+        if title:
+            datas['title'] = title
+
+        if description:
+            datas['description'] = description
+
+        if state:
+            datas['state'] = state
+
+        todos = TodoFactory.create_batch(
+            quantity,
+            **datas,
+        )
+
+        session.bulk_save_objects(todos)
+        session.commit()
+
+        return session.scalars(select(Todo)).all()
+
+    return make_todos
 
 
 @pytest.fixture()

@@ -59,9 +59,10 @@ def get_current_user(
         if not email:
             raise credentials_exception
 
-    except PyJWTError as e:
-        raise credentials_exception from e
     except ExpiredSignatureError as e:
+        raise credentials_exception from e
+
+    except PyJWTError as e:
         raise credentials_exception from e
 
     user = session.scalar(select(User).where(User.email == email))
